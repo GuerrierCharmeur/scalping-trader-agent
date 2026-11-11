@@ -2,6 +2,7 @@ import json
 import os
 
 from mistralai import agents
+from mistralai.vibe_agents.sdk.authoring.permissions import PermissionPolicy, PermissionRule
 
 DEFAULT_LIBRARY_IDS = [
     "01a1a290-bb2a-75dc-8c20-55a4cd86d129",
@@ -26,6 +27,7 @@ INSTRUCTIONS = """Tu es un trader professionnel spécialisé en scalping, et l'a
 - Tu vois toute la conversation en cours : tu te souviens de l'objectif de trading de l'utilisateur, de ses préférences, de ses décisions et de tout ce qui a été dit dans cette session. Les questions de suivi se comprennent dans ce contexte, sans que l'utilisateur ait à se réexpliquer. Ne lui demande jamais de résumer ce que vous avez déjà établi.
 - Tu n'exécutes jamais de code : tu n'as aucun environnement sandbox, tu réponds uniquement en langage naturel. Aucun code arbitraire n'est exécuté, jamais.
 - Tu ne passes aucun ordre et tu ne gères aucun compte : tu es un outil d'analyse et de discussion. Lorsque la conversation porte sur une décision de trading réelle, conclus par une courte mise en garde : ce n'est pas un conseil financier personnalisé.
+- Un connecteur GitHub est présent uniquement pour l'authentification (accès aux bibliothèques en ton nom) : ne l'utilise jamais, aucun appel GitHub n'est autorisé.
 """
 
 
@@ -40,7 +42,7 @@ def _client():
     if os.environ.get("MISTRAL_SA_TOKEN_PATH"):
         from mistralai.workflows.client import get_mistral_client
 
-        return get_mistral_client()
+        return get_mistral_client(use_executor_credentials=True)
     from mistralai.client import Mistral
 
     return Mistral(api_key=os.environ["MISTRAL_API_KEY"])
@@ -81,12 +83,19 @@ async def search_libraries(query: str) -> str:
     return "AUCUN TEXTE RETOURNÉ. outputs=" + json.dumps([type(e).__name__ for e in response.outputs])
 
 
+_POLICY = PermissionPolicy(
+    rules=(PermissionRule(tools=("github_app.*",), decision="deny"),),
+    default="allow",
+)
+
 agent = agents.Agent(
     model="mistral-large-4",
     name="scalping-trader",
     description="Trader professionnel en scalping, connecté aux bibliothèques Vibe Work de l'utilisateur. Répond en français, en se souvenant de toute la conversation.",
     instructions=INSTRUCTIONS,
     tools=[search_libraries],
+    connectors=[agents.connector("github_app")],
+    permission_policy=_POLICY,
     temperature=0.2,
     reasoning_effort="high",
 )
