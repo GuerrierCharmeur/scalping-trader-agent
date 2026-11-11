@@ -6,7 +6,7 @@ DEFAULT_LIBRARY_IDS = [
     "01a1a290-bb2a-75dc-8c20-55a4cd86d129",
     "01a19db3-45cb-73e9-94f4-7f7df10d73fd",
     "01a19da6-a4fc-72a9-860b-9aacbeb1f2fe",
-    "01a197ec-ecec-7c7450-a7f3-409c19965c1",
+    "01a197ec-ecec-7450-a7f3-409c19965c1f",
     "01a17965-d194-73a1-8cc3-dd24288d8e8c",
     "01a1795d-6054-704c-8a65-d4fe041868bc",
     "01a171f9-5fa1-7048-99e2-cba5fffde894",
