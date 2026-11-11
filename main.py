@@ -39,7 +39,7 @@ def _client():
     if os.environ.get("MISTRAL_SA_TOKEN_PATH"):
         from mistralai.workflows.client import get_mistral_client
 
-        return get_mistral_client(use_executor_credentials=True)
+        return get_mistral_client()
     from mistralai.client import Mistral
 
     return Mistral(api_key=os.environ["MISTRAL_API_KEY"])
