@@ -1,3 +1,4 @@
+import json
 import os
 
 from mistralai import agents
@@ -48,16 +49,23 @@ def _client():
 @agents.tool
 async def search_libraries(query: str) -> str:
     """Recherche dans les bibliothèques Vibe Work de l'utilisateur (stratégies, backtests, informations sur les symboles, notes de trading) les passages pertinents pour la question. Appelle cet outil avant toute réponse susceptible d'être couverte par ces documents."""
-    response = await _client().beta.conversations.start_async(
-        model="mistral-large-4",
-        inputs=query,
-        tools=[{"type": "document_library", "library_ids": _library_ids()}],
-        store=False,
-    )
+    try:
+        response = await _client().beta.conversations.start_async(
+            model="mistral-large-4",
+            inputs=query,
+            tools=[{"type": "document_library", "library_ids": _library_ids()}],
+            store=False,
+        )
+    except Exception as exc:
+        raise agents.ToolError(f"library search failed: {type(exc).__name__}: {exc}")
     parts: list[str] = []
+    debug: list[str] = []
     for entry in response.outputs:
         content = getattr(entry, "content", None)
         if content is None:
+            info = getattr(entry, "info", None)
+            if info is not None:
+                debug.append(f"[{type(entry).__name__}] " + json.dumps(info, default=str)[:800])
             continue
         if isinstance(content, str):
             parts.append(content)
@@ -66,7 +74,11 @@ async def search_libraries(query: str) -> str:
             text = getattr(chunk, "text", None)
             if isinstance(text, str):
                 parts.append(text)
-    return "\n".join(parts) if parts else "Aucun passage pertinent trouvé dans les bibliothèques."
+    if parts:
+        return "\n".join(parts)
+    if debug:
+        return "AUCUN TEXTE RETOURNÉ. Debug: " + " | ".join(debug)
+    return "AUCUN TEXTE RETOURNÉ. outputs=" + json.dumps([type(e).__name__ for e in response.outputs])
 
 
 agent = agents.Agent(
