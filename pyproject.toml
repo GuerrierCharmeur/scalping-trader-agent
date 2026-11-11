@@ -1,0 +1,9 @@
+[project]
+name = "scalping-trader-agent"
+version = "0.1.0"
+description = "Agent trader professionnel en scalping, deployable sur Mistral Cloud, connecte aux bibliotheques Vibe Work"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mistralai-agents>=1.1.0",
+]
